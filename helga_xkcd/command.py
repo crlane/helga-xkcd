@@ -1,6 +1,10 @@
+import smokesignal
+
 from helga import log
 from helga import settings
 from helga.plugins import command
+
+from twisted.internet import reactor
 
 from helga_xkcd import db
 
@@ -8,6 +12,12 @@ logger = log.getLogger(__name__)
 
 EPSILON = 10 ** -3
 TEXT_SCORE_THRESHOLD = getattr(settings, 'XKCD_TEXT_SCORE_THRESHOLD', 0.75)
+
+
+@smokesignal.on('join')
+def db_set_up(client, channel):
+    logger.debug('asynchronously populating database...')
+    reactor.callLater(0, db.populate_db)
 
 
 def within_importance_threshold(score):

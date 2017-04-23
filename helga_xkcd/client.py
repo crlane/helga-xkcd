@@ -17,7 +17,7 @@ class XKCDClient(object):
     def _request(self, comic_number=None):
         url_args = [str(a) for a in (self.BASE, comic_number, self.EXT) if a is not None]
         url = '/'.join(url_args)
-        logger.debug('Requestiing comic at %s', url)
+        logger.debug('Requesting comic at %s', url)
         try:
             resp = self._sess.get(url)
             resp.raise_for_status()
@@ -30,6 +30,9 @@ class XKCDClient(object):
         return self._request()
 
     def fetch_number(self, number):
+        # XXX: hacking around the fact that 404 comic is not real.
+        if number == 404:
+            return {'img': 'http://i.imgur.com/utzTCyo.png', 'title': "That's the joke.", 'alt': 'Visit the page for yourself'}
         return self._request(number)
 
     def fetch_random(self, latest=1827):
