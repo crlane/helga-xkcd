@@ -5,7 +5,7 @@ helga-xkcd
 Description
 ===========
 
-The helga-xkcd plugin provides a helga_ command for retrieving xkcd comics through that site's `JSON based api`_.
+The helga-xkcd plugin provides a helga_ command for retrieving xkcd comics through that site's `JSON based api`_. Requires MongoDB >= 2.6 for full text search.
 
 --------
 
@@ -34,11 +34,11 @@ Features:
 
 Provides commands for fetching official xkcd comic images and displaying its hidden text
 
-- [ ] fetch the latest comic `!xkcd`
-- [ ] fetch a specific comic `!xkcd [n]`
-- [ ] fetch a comic about a keybword: `!xkcd about [keyword]`
-
-- [ ] Periodically refreshes index of comics it knows about
+- [o] fetch the latest comic `!xkcd`
+- [o] fetch a specific comic `!xkcd number [n]`
+- [o] fetch a comic about a keyword: `!xkcd about [keyword]`
+- [ ] automatically populate database when the plugin is loaded
+- [ ] periodically refreshes index of comics it knows about
 
 .. _helga: https://github.com/shaunduncan/helga
 .. _`JSON based api`: https://xkcd.com/json.html
