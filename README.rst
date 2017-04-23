@@ -11,21 +11,24 @@ The helga-xkcd plugin provides a helga_ command for retrieving xkcd comics throu
 
 Usage:
 ======
+Get the latest xkcd
+
+.. code-block:: none
+    !xkcd
 
 Get a random xkcd comic
 
-::bash
+.. code-block:: none
     !xkcd random
 
 Get xkcd comic number <n>. For example, to fetch comic number 10:
 
-::bash
+.. code-block:: none
     !xckd number 10
 
 
 Get a comic about a given text string. Using text indexing
-
-::bash
+.. code-block:: none
     !xkcd about pi
 
 
