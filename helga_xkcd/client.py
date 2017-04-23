@@ -32,7 +32,7 @@ class XKCDClient(object):
     def fetch_number(self, number):
         # XXX: hacking around the fact that 404 comic is not real.
         if number == 404:
-            return {'img': 'http://i.imgur.com/utzTCyo.png', 'title': "That's the joke.", 'alt': 'Visit the page for yourself'}
+            return {'img': 'http://i.imgur.com/utzTCyo.png', 'title': "That's the joke.", 'alt': 'Visit the page for yourself', 'num': number}
         return self._request(number)
 
     def fetch_random(self, latest=1827):

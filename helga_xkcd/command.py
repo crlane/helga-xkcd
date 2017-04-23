@@ -16,7 +16,7 @@ TEXT_SCORE_THRESHOLD = getattr(settings, 'XKCD_TEXT_SCORE_THRESHOLD', 0.75)
 
 @smokesignal.on('join')
 def db_set_up(client, channel):
-    logger.debug('asynchronously populating database...')
+    logger.debug('Asynchronously populating database...')
     reactor.callLater(0, db.populate_db)
 
 

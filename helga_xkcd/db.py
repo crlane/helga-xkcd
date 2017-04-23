@@ -2,12 +2,17 @@ import random
 
 import pymongo
 
-from helga.db import db
 from helga import log
+from helga import settings
+from helga.db import db
+
+from twisted.internet import reactor
 
 from helga_xkcd.client import XKCDClient
 
 logger = log.getLogger(__name__)
+
+MAX_SYNCHRONOUS = getattr(settings, 'XKCD_MAX_SYNCHRONOUS_REQS', 10)
 
 
 def fetch_latest_comic():
@@ -63,23 +68,35 @@ def get_db_id_gaps():
     init_db()
     xkcd_client = XKCDClient()
     max_local_id = newest() or 1
+    logger.debug('Max comic id in database: %d', max_local_id)
     max_remote_id = xkcd_client.fetch_latest().get('num')
     logger.debug('Max comic id on site: %d', max_remote_id)
-
     return max_remote_id, max_local_id
 
 
-def refresh_db(start, end):
+def refresh_db(high_id, low_id):
     """
-    Refreshes the database by filling in all the comic IDs between start and end.
+    Refreshes the database by filling in all the comic IDs between high_id and low_id.
 
-    assumes that start > end.
+    assumes that high_id > low_id.
     """
+    if high_id <= low_id:
+        logger.debug('No work to (%s -> %s). Skipping database refresh', high_id, low_id)
+        return
+
+    # partition high -> low in max_sync size chunks
+    if (high_id - low_id) > MAX_SYNCHRONOUS:
+        logger.debug('Too many missing comics. Chunking and populating asynchronously')
+        old_high = high_id
+        new_high = max(high_id - MAX_SYNCHRONOUS, 1)
+        jitter = random.random()
+        reactor.callLater(jitter, refresh_db, old_high, new_high)
+        reactor.callLater(jitter, refresh_db, new_high, low_id)
+        return
+
     xkcd_client = XKCDClient()
-    if (start - end) > 100:
-        logger.debug('Lots of missing comics. It will take a while to populate db')
-
-    for comic_number in xrange(start, end, -1):
+    logger.debug('Fetching comics from high_id %s to low_id %s', high_id, low_id)
+    for comic_number in xrange(high_id, low_id, -1):
         try:
             comic = xkcd_client.fetch_number(comic_number)
             db.xkcd.insert_one(comic)
@@ -100,4 +117,9 @@ def populate_db():
     max_remote, max_local = get_db_id_gaps()
     if max_remote and max_local:
         refresh_db(max_remote, max_local)
-    logger.debug('Unable to get remote or local max ids. Skipping db population for now')
+    else:
+        msg = (
+            'Unable to get max_remote (%s) or max_local (%s) ids.'
+            'Skipping db population for now'
+        )
+        logger.debug(msg, max_remote, max_local)
