@@ -23,7 +23,7 @@ def stringify_post(comic):
 
     Note that due to the way helga works, this will result in multiple line response.
     """
-    return u'{img}\nTitle: {safe_title} Alt: {alt}'.format(**comic)
+    return u'{img}\nTitle: "{safe_title}" Alt: {alt}'.format(**comic)
 
 
 def comic_number_command(client, channel, number):
