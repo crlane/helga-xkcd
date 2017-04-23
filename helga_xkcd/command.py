@@ -27,6 +27,7 @@ def stringify_post(comic):
 
 
 def comic_number_command(client, channel, number):
+    """ Subcommand for fetching a comic of a particular number """
     comic = db.fetch_comic_number(number)
     logger.debug('Comic returned from db: %s', comic)
     if comic:
@@ -43,6 +44,7 @@ def comic_number_command(client, channel, number):
 
 
 def latest_comic_command(client, channel):
+    """ Subcommand for fetching the latest comic """
     comic = db.fetch_latest_comic()
     if comic:
         logger.debug('Fetched latest comic: %s', comic)
@@ -50,6 +52,9 @@ def latest_comic_command(client, channel):
 
 
 def comic_about_command(client, channel, text):
+    """ Subcommand for fetching a comic about a particular topic using full-text
+    search.
+    """
     comic = db.fetch_comic_about(text)
     if comic:
         if within_importance_threshold(comic.get('score', 0)):
@@ -59,16 +64,19 @@ def comic_about_command(client, channel, text):
             msg = ('Fetched comic number %d, but the score was below importance threshold (%f < %f).'
                    'If this happens consistently, lower the threshold in settings.')
             logger.debug(msg, comic['num'], comic['score'], TEXT_SCORE_THRESHOLD)
-
             return 'No comics score high enough to be about {text}. Can you be more specific?'.format(text=text)
     return u"Randall hasn't made a comic about {text}".format(text=text)
 
 
 def random_comic_command(client, chanel):
+    """ subcommand for fetching a random comic based on the ones which have been
+    indexed.
+    """
     comic = db.fetch_random_comic()
     if comic:
         logger.debug('Fetched random comic: %s', comic)
-        return comic['img']
+        return stringify_post(comic)
+    return u'Whoops! Unable to find a random comic'
 
 
 @command('xkcd', help="Show an xkcd comic. Usage: helga xkcd (number <int>|random|about <text> ...)")

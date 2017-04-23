@@ -58,9 +58,9 @@ def fetch_comic_number(number):
 
 
 def fetch_random_comic():
-    latest = newest()
-    if latest is not None:
-        return db.xkcd.find_one({'num': random.randint(1, latest + 1)})
+    numbers = [doc['num'] for doc in db.xkcd.find({}, {'num': 1, '_id': 0})]
+    if numbers:
+        return db.xkcd.find_one({'num': random.choice(numbers)})
     return None
 
 
