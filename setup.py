@@ -6,17 +6,18 @@ INSTALL_REQUIRES = [
 ]
 
 EXTRAS_REQUIRE = {
-    'development': ['ipython<6.0'],
+    'development': ['ipython<6.0', 'twine'],
     'testing': ['pytest', 'tox'],
 }
 
 setup(
     name='helga-xkcd',
-    version='0.0.1',
+    version='0.1.0',
     description='A helga plugin to fetch xkcd comics',
 
-    author="Cameron Lane",
-    author_email="crlane@adamanteus.com",
+    author='Cameron Lane',
+    author_email='crlane@adamanteus.com',
+    url='https://github.com/crlane/helga-xkcd',
     packages=find_packages(exclude=['tests']),
     include_package_data=True,
     zip_safe=True,
