@@ -6,13 +6,13 @@ INSTALL_REQUIRES = [
 ]
 
 EXTRAS_REQUIRE = {
-    'development': ['ipython<6.0', 'twine'],
+    'development': ['ipython<6.0', 'twine', 'wheel'],
     'testing': ['pytest', 'tox'],
 }
 
 setup(
     name='helga-xkcd',
-    version='0.1.0',
+    version='0.1.1',
     description='A helga plugin to fetch xkcd comics',
 
     author='Cameron Lane',
