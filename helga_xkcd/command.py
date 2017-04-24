@@ -14,8 +14,8 @@ EPSILON = 10 ** -3
 TEXT_SCORE_THRESHOLD = getattr(settings, 'XKCD_TEXT_SCORE_THRESHOLD', 0.75)
 
 
-@smokesignal.on('join')
-def db_set_up(client, channel):
+@smokesignal.on('signon')
+def db_set_up(client):
     logger.debug('Asynchronously populating database...')
     reactor.callLater(0, db.populate_db)
 
