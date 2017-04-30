@@ -33,7 +33,7 @@ def stringify_post(comic):
 
     Note that due to the way helga works, this will result in multiple line response.
     """
-    return u'{img}\nTitle: "{safe_title}" Alt: {alt}'.format(**comic)
+    return u'{img}\nNumber: {num} Title: "{safe_title}" Alt: {alt}'.format(**comic)
 
 
 def comic_number_command(client, channel, number):
@@ -89,7 +89,24 @@ def random_comic_command(client, chanel):
     return u'Whoops! Unable to find a random comic'
 
 
-@command('xkcd', help="Show an xkcd comic. Usage: helga xkcd (number <int>|random|about <text> ...)")
+def refresh_db_command(client, channel, comic_ids=None):
+    """ subcommand for refreshing the database. If `numbers` is provided, refreshes
+    or adds database records for those comic ids
+
+    :param client:
+    :param channel:
+    :param comic_ids: an optional list of numbers to fetch and insert into db
+    """
+    if comic_ids is None:
+        reactor.callLater(0, db.populate_db)
+        return 'Fetching the latest comics in background'
+    else:
+        for comic_id in comic_ids:
+            reactor.callLater(0, db.fetch_and_store, comic_id)
+        return 'Fetching these comics in background: {}'.format(', '.join([str(cid) for cid in comic_ids]))
+
+
+@command('xkcd', help="Show an xkcd comic. Usage: helga xkcd (number <int>|latest|random|refresh <int> ...|about <text> ...)")
 def xkcd(client, channel, nick, message, cmd, args):
     """
     Manages listing plugins, or enabling and disabling them
@@ -112,6 +129,14 @@ def xkcd(client, channel, nick, message, cmd, args):
 
     if subcmd == 'random':
         return random_comic_command(client, channel)
+
+    if subcmd == 'refresh':
+        try:
+            numbers = map(int, args[1:])
+        except ValueError:
+            logger.exception("Got bad integer argument for number")
+            return 'refresh subcommand allows only integers as arguments'
+        return refresh_db_command(client, channel, numbers)
 
     if subcmd == 'about':
         text = args[1:]
