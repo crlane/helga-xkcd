@@ -35,6 +35,8 @@ class XKCDClient(object):
             return {'img': 'http://i.imgur.com/utzTCyo.png', 'safe_title': "That's the joke.", 'alt': 'Visit the page for yourself', 'num': number}
         return self._request(number)
 
-    def fetch_random(self, latest=1827):
-        random_selection = random.randint(1, latest + 1)
+    def fetch_random(self, latest=None):
+        if latest is None:
+            latest = self.fetch_latest() or {'num': 1830}
+        random_selection = random.randint(1, latest.get('num') + 1)
         return self._request(random_selection)

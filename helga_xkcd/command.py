@@ -97,13 +97,13 @@ def refresh_db_command(client, channel, comic_ids=None):
     :param channel:
     :param comic_ids: an optional list of numbers to fetch and insert into db
     """
-    if comic_ids is None:
+    if not comic_ids:
         reactor.callLater(0, db.populate_db)
         return 'Fetching the latest comics in background'
-    else:
-        for comic_id in comic_ids:
-            reactor.callLater(0, db.fetch_and_store, comic_id)
-        return 'Fetching these comics in background: {}'.format(', '.join([str(cid) for cid in comic_ids]))
+
+    for comic_id in comic_ids:
+        reactor.callLater(0, db.fetch_and_store, comic_id)
+    return 'Fetching these comics in background: {}'.format(', '.join([str(cid) for cid in comic_ids]))
 
 
 @command('xkcd', help="Show an xkcd comic. Usage: helga xkcd (number <int>|latest|random|refresh <int> ...|about <text> ...)")
@@ -132,11 +132,12 @@ def xkcd(client, channel, nick, message, cmd, args):
 
     if subcmd == 'refresh':
         try:
-            numbers = map(int, args[1:])
+            comics_to_refresh = map(int, args[1:])
         except ValueError:
             logger.exception("Got bad integer argument for number")
             return 'refresh subcommand allows only integers as arguments'
-        return refresh_db_command(client, channel, numbers)
+        logger.debug("comics to refresh %s", comics_to_refresh)
+        return refresh_db_command(client, channel, comics_to_refresh)
 
     if subcmd == 'about':
         text = args[1:]

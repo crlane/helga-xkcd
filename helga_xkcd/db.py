@@ -18,10 +18,10 @@ MAX_SYNCHRONOUS = getattr(settings, 'XKCD_MAX_SYNCHRONOUS_REQS', 10)
 def fetch_latest_comic():
     cl = XKCDClient()
     latest = cl.fetch_latest()
-    db_latest = db.xkcd.find_one(sort=[('num', pymongo.DESCENDING)])
-    if latest['num'] > db_latest['num']:
-        logger.debug('Got newer latest value, filling in gaps')
-        reactor.callLater(0, refresh_db, latest['num'], db_latest['num'])
+    db_latest = newest() or 0
+    if latest['num'] > db_latest:
+        logger.debug('Newer comics exist, filling in gaps!')
+        reactor.callLater(0, refresh_db, latest['num'], (db_latest + 1))
     return latest
 
 
