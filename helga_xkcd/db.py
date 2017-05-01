@@ -16,7 +16,13 @@ MAX_SYNCHRONOUS = getattr(settings, 'XKCD_MAX_SYNCHRONOUS_REQS', 10)
 
 
 def fetch_latest_comic():
-    return db.xkcd.find_one(sort=[('num', pymongo.DESCENDING)])
+    cl = XKCDClient()
+    latest = cl.fetch_latest()
+    db_latest = newest() or 0
+    if latest['num'] > db_latest:
+        logger.debug('Newer comics exist, filling in gaps!')
+        reactor.callLater(0, refresh_db, latest['num'], (db_latest + 1))
+    return latest
 
 
 def fetch_comic_number(number):
@@ -30,10 +36,20 @@ def fetch_random_comic():
     return None
 
 
+def fetch_and_store(comic_number):
+    """ if comic is not present, stores it. If it is, overwrites it"""
+    xkcd_client = XKCDClient()
+    try:
+        comic = xkcd_client.fetch_number(comic_number)
+        db.xkcd.replace_one({'num': comic['num']}, comic, upsert=True)
+    except pymongo.errors.PyMongoError:
+        logger.exception('Error inserting comic %d into database. You might get strange behavior.', comic_number)
+
+
 def newest():
-    newest = db.xkcd.find_one(sort=[('num', pymongo.DESCENDING)])
-    if newest:
-        return newest['num']
+    newest_in_db = db.xkcd.find_one(sort=[('num', pymongo.DESCENDING)])
+    if newest_in_db:
+        return newest_in_db['num']
     return None
 
 
@@ -54,8 +70,18 @@ def init_db():
     should only be called when the plugin is first installed and configured
     """
     logger.debug('Initializing database indexes')
-    db.xkcd.create_index([('$**', pymongo.TEXT)], background=True)
-    db.xkcd.create_index([('num', pymongo.DESCENDING)], background=True, unique=True)
+    definitions = [
+        [('num', pymongo.DESCENDING)],
+        [('$**', pymongo.TEXT)]
+    ]
+    for index_def in definitions:
+        kwargs = dict(background=True)
+        if index_def[0][0] == 'num':
+            kwargs.update({'unique': True})
+        try:
+            db.xkcd.create_index(index_def, **kwargs)
+        except pymongo.errors.DuplicateKeyError:
+            logger.debug('Index already exists:(%s), skipping', index_def)
 
 
 def get_db_id_gaps():
@@ -91,17 +117,12 @@ def refresh_db(high_id, low_id):
         new_high = max(high_id - MAX_SYNCHRONOUS, 1)
         jitter = random.random()
         reactor.callLater(jitter, refresh_db, old_high, new_high)
-        reactor.callLater(jitter, refresh_db, new_high, low_id)
+        reactor.callLater(jitter, refresh_db, new_high - 1, low_id)
         return
 
-    xkcd_client = XKCDClient()
     logger.debug('Fetching comics from high_id %s to low_id %s', high_id, low_id)
-    for comic_number in xrange(high_id, low_id, -1):
-        try:
-            comic = xkcd_client.fetch_number(comic_number)
-            db.xkcd.insert_one(comic)
-        except pymongo.errors.PyMongoError:
-            logger.exception('Error inserting comic %d into database. You might get strange behavior.', comic_number)
+    for comic_number in xrange(high_id, low_id - 1, -1):
+        fetch_and_store(comic_number)
 
 
 def populate_db():
