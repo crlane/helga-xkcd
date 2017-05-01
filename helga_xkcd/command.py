@@ -140,5 +140,7 @@ def xkcd(client, channel, nick, message, cmd, args):
         return refresh_db_command(client, channel, comics_to_refresh)
 
     if subcmd == 'about':
-        text = args[1:]
+        text = map(str, args[1:])
+        if not text:
+            return 'about subcommand requires some text!'
         return comic_about_command(client, channel, ' '.join(text))
